@@ -1,9 +1,10 @@
-> ### Plagiarizer
+> # Plagiarizer
 
 ----------
 
 # Requirements
 **PHP 7.3+**
+    
     BCMATH PHP extension
     Ctype PHP extension
     Fileinfo PHP extension
@@ -17,6 +18,7 @@
 **Composer**
 
 **Python 3.5+**
+    
     sys package
     json package
     pandas package -pip install -U pandas
@@ -47,7 +49,9 @@ Generate a new application key
     php artisan key:generate
 
 Clear cache files
+    
     php artisan config:cache
+    
 Run the database migrations (**Set the database connection in .env before migrating**)
 
     php artisan migrate fresh --seed
@@ -57,3 +61,8 @@ Start the local development server
     php artisan serve
 
 You can now access the server at http://127.0.0.1:8000
+
+Default Login credentials:
+
+    admin@admin.com
+    password
