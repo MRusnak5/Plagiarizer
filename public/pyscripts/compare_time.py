@@ -8,7 +8,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 def compare_time(array):
     similarity_df = pd.read_json(array)
     similarity_df = similarity_df.transpose()
-    similarity_df = similarity_df.subtract(similarity_df.melt().value.min())
+    minForRow = similarity_df.max(axis=0) #max for each row
+    globalMin = minForRow.max();
+    similarity_df = similarity_df.subtract(globalMin)
     cosine_sim = cosine_similarity(similarity_df)
     output_df = pd.DataFrame(cosine_sim)
     output_df.index = similarity_df.index

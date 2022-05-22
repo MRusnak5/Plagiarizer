@@ -137,7 +137,25 @@ FROM mdl_quiz_attempts quiza JOIN mdl_quiz q ON q.id=quiza.quiz
     JOIN mdl_question_attempt_steps qas ON qas.questionattemptid=qa.id
     INNER JOIN (SELECT userid,quiz,MAX(attempt) attempt from mdl_quiz_attempts WHERE quiz='$id' Group by userid) maxattempt on maxattempt.userid=u.id and quiza.attempt=maxattempt.attempt
 
-WHERE q.id = '$id' and qas.state!='todo';"));
+WHERE q.id = '$id' and qas.state!='todo' and qas.fraction is not null
+ORDER BY student_name,unix_answered_at ASC;"));
+        $quiz_time = DB::connection('mysql2')->select(("SELECT
+   concat( u.firstname, ' ', u.lastname ) AS student_name,
+   q.id,
+
+   from_unixtime(qas.timecreated) as 'answered_at',
+   (qas.timecreated) as 'unix_answered_at'
+
+FROM mdl_quiz_attempts quiza JOIN mdl_quiz q ON q.id=quiza.quiz
+    JOIN mdl_question_usages qu ON qu.id = quiza.uniqueid
+    JOIN mdl_question_attempts qa ON qa.questionusageid = qu.id
+    JOIN mdl_question que ON que.id = qa.questionid
+    JOIN mdl_user u ON u.id = quiza.userid
+    JOIN mdl_question_attempt_steps qas ON qas.questionattemptid=qa.id
+    INNER JOIN (SELECT userid,quiz,MAX(attempt) attempt from mdl_quiz_attempts WHERE quiz='$id' Group by userid) maxattempt on maxattempt.userid=u.id and quiza.attempt=maxattempt.attempt
+
+WHERE q.id = '$id' and qas.state!='todo' and qas.fraction is null
+ORDER BY student_name,unix_answered_at ASC"));
 
         $quiz_constants = DB::connection('mysql2')->select(("SELECT
    concat( u.firstname, ' ', u.lastname ) AS student_name,
@@ -160,7 +178,7 @@ FROM mdl_quiz_attempts quiza JOIN mdl_quiz q ON q.id=quiza.quiz
     JOIN mdl_question_attempt_steps qas ON qas.questionattemptid=qa.id
     INNER JOIN (SELECT userid,quiz,MAX(attempt) attempt from mdl_quiz_attempts WHERE quiz='$id' Group by userid) maxattempt on maxattempt.userid=u.id and quiza.attempt=maxattempt.attempt
 
-WHERE q.id = '$id' and qas.state!='todo'
+WHERE q.id = '$id' and qas.state!='todo' and qas.fraction is not null
 GROUP by quiza.userid;"));
 
         if ($quiz_attempts && $quiz_constants) {
@@ -174,11 +192,14 @@ GROUP by quiza.userid;"));
             $fill_array = $this->replace_null_with_zero($array);
             $groupByUsers = $this->group_by("student_name", $fill_array);
 
+            $time_array = json_decode(json_encode($quiz_time), true);
+            $time_fill_array = $this->replace_null_with_zero($time_array);
+            $time_groupByUsers = $this->group_by("student_name", $time_fill_array);
 
             $fraction = [];
             $max_mark = [];
             $answered_at = [];
-            $unix_answered_at = [];
+
             $result = [];
             foreach ($groupByUsers as $user) {
 
@@ -187,23 +208,36 @@ GROUP by quiza.userid;"));
                     $fraction[$v['student_name']][] = $v['fraction'];
                     $result[$v['student_name']][] = array('Fraction' => $v['fraction'], 'Maxmark' => $v['maxmark'], 'Answered_at' => $v['answered_at']);
                     $max_mark[$v['student_name']][] = $v['maxmark'];
-                    $answered_at[$v['student_name']][] = $v['answered_at'];
-                    $unix_answered_at[$v['student_name']][] = $v['unix_answered_at'];
 
 
                 }
 
             }
 
+          //moodle query
+            $unix_answered_at = [];
+            $result_2 = [];
+            foreach ($time_groupByUsers as $user) {
 
+                foreach ($user as $k => $v) {
+
+                    $unix_answered_at[$v['student_name']][] = $v['unix_answered_at'];
+                    $answered_at[$v['student_name']][] = $v['answered_at'];
+                    $result_2[$v['student_name']][] = array('Answered_at' => $v['answered_at']);
+
+
+                }
+
+            }
+
+            $merge_results = array_replace_recursive($result, $result_2);
             $flat_results = [];
-            foreach ($result as $key => $res) {
+            foreach ($merge_results as $key => $res) {
 
                 $flat_results[$key] = $this->flattenWithKeys($res);
             }
 
             $merge = array_merge_recursive($flat_results, $const);
-
             $json_input_marks = json_encode($fraction);
 
             $path_to_script =  public_path('pyscripts/compare_marks.py');
@@ -214,6 +248,7 @@ GROUP by quiza.userid;"));
             }
             $json_output_marks = $process->getOutput();
 
+           //time spent on question
             $answered_at_time = [];
             foreach ($merge as $key => $time) {
                 $timestamp = $time['quiz_started_at'];
@@ -224,6 +259,7 @@ GROUP by quiza.userid;"));
 
                 }
             }
+
             $json_input_answered_at = json_encode($answered_at_time);
             $process = new Process(['python3', $path_to_script, $json_input_answered_at]);
             $process->run();
@@ -250,6 +286,7 @@ GROUP by quiza.userid;"));
 
             $path_to_script2 = public_path('pyscripts/compare_time.py');
             $json_answered_time = json_encode($unix_answered_at);
+
             $process = new Process(['python3', $path_to_script2, $json_answered_time]);
             $process->run();
             if (!$process->isSuccessful()) {

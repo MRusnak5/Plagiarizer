@@ -56,8 +56,8 @@
                                 <tr>
                                     <td>{{ $constants['student_name']}}</td>
                                     <td>{{ $constants['quiz_name']}}</td>
-                                    <td>{{ $constants['Average_time_taken']}} seconds</td>
-                                    <td>{{ number_format($constants['fraction'],2).'/'.number_format($constants['maxmark']),2}}</td>
+                                    <td>{{ number_format($constants['Average_time_taken'],2)}} seconds</td>
+                                    <td>{{ number_format($constants['fraction'],3).'/'.number_format($constants['maxmark']),2}}</td>
                                     <td>{{\Carbon\Carbon::parse($constants['quiz_started_at'])->format('d-m-Y H:i:s')}}</td>
                                     <td>{{\Carbon\Carbon::parse($constants['quiz_finished_at'])->format('d-m-Y H:i:s')}}</td>
 
@@ -95,6 +95,34 @@
 
 
                 </div>
+
+                <div class="table-responsive">
+
+                    <table class="table table-bordered" id="gradesTimeDatatable" width="100%" cellspacing="0">
+                        <h1>Grades similarities</h1>
+                        <thead>
+                        <tr>
+                            <th></th>
+                            @foreach($json_output_marks as $key=>$marks)
+                                <th>{{$key}}</th>
+                            @endforeach
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($json_output_marks as $key=>$marks)
+                            <tr>
+                                <td>{{$key}}</td>
+                                @foreach($marks as $v)
+                                    <td>{{ $v}}</td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+
+                        </tbody>
+                    </table>
+                    @endif
+
+                </div>
                 <div class="table-responsive">
 
                     <table class="table table-bordered" id="answeredTimeDatatable" width="100%" cellspacing="0">
@@ -123,33 +151,6 @@
                         </tbody>
                     </table>
 
-
-                </div>
-                <div class="table-responsive">
-
-                    <table class="table table-bordered" id="gradesTimeDatatable" width="100%" cellspacing="0">
-                        <h1>Grades similarities</h1>
-                        <thead>
-                        <tr>
-                            <th></th>
-                            @foreach($json_output_marks as $key=>$marks)
-                                <th>{{$key}}</th>
-                            @endforeach
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach($json_output_marks as $key=>$marks)
-                            <tr>
-                                <td>{{$key}}</td>
-                                @foreach($marks as $v)
-                                    <td>{{ $v}}</td>
-                                @endforeach
-                            </tr>
-                        @endforeach
-
-                        </tbody>
-                    </table>
-                    @endif
 
                 </div>
             </div>

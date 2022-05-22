@@ -26,11 +26,11 @@
             <span>{{ __('Users') }}</span></a>
     </li>
 
-    <li class="nav-item @if(request()->routeIs('about')) active @endif">
-        <a class="nav-link" href="{{ route('about') }}">
-            <i class="fas fa-fw fa-eye"></i>
-            <span>{{ __('About') }}</span></a>
-    </li>
+{{--    <li class="nav-item @if(request()->routeIs('about')) active @endif">--}}
+{{--        <a class="nav-link" href="{{ route('about') }}">--}}
+{{--            <i class="fas fa-fw fa-eye"></i>--}}
+{{--            <span>{{ __('About') }}</span></a>--}}
+{{--    </li>--}}
 
     <li class="nav-item @if(request()->routeIs('courses.index')) active @endif">
         <a class="nav-link" href="{{ route('courses.index') }}">
